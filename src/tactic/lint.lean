@@ -457,6 +457,21 @@ do tt ← is_prop d.type | return none,
   no_errors_found := "No uses of `inhabited` arguments should be replaced with `nonempty`",
   errors_found := "USES OF `inhabited` SHOULD BE REPLACED WITH `nonempty`." }
 
+meta def valid_simp (d : declaration) : tactic (option string) :=
+do tt ← succeeds (has_attribute `simp d.to_name) | return none,
+   l ← simp_lemmas.mk.add_simp d.to_name,
+   let cfg : simp_config_ext := {},
+   succ ← succeeds (solve_aux d.type (intros >> tactic.interactive.simp_core_aux cfg.to_simp_config cfg.discharger l [] [] tt >> try tactic.triv >> try (tactic.reflexivity reducible) >> done)),
+   return $
+     if succ then none
+     else "simp lemma will never fire"
+
+
+@[linter, priority 1390] meta def linter.valid_simp : linter :=
+{ test := valid_simp,
+  no_errors_found := "All simp lemmas are valid.",
+  errors_found := "INVALID SIMP LEMMAS." }
+
 /- Implementation of the frontend. -/
 
 /-- `get_checks slow extra use_only` produces a list of linters.
@@ -604,3 +619,22 @@ decls.mmap' (λ d, try (nolint_attr.set d () tt))
 It will always succeed, even if some of the declarations do not exist. -/
 @[user_command] meta def apply_nolint_cmd (_ : parse $ tk "apply_nolint") : parser unit :=
 ident_* >>= ↑apply_nolint_tac
+
+
+#exit
+
+#lint_mathlib only valid_simp
+
+def k : ¬ nonempty empty := by simp only [nonempty_empty]
+
+#print k
+-- logic\basic.lean
+#print forall_prop_of_true /- simp lemma will never fire -/
+#print nonempty_empty /- simp lemma will never fire -/
+#print false_ne_true /- simp lemma will never fire -/
+#print imp_iff_right /- simp lemma will never fire -/
+#print forall_prop_of_false /- simp lemma will never fire -/
+#print exists_false /- simp lemma will never fire -/
+#print exists_prop_of_true /- simp lemma will never fire -/
+#print exists_prop_of_false /- simp lemma will never fire -/
+#print not_nonempty_pempty /- simp lemma will never fire -/
