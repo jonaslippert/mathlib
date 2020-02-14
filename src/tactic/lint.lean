@@ -459,9 +459,11 @@ do tt ← is_prop d.type | return none,
 
 meta def valid_simp (d : declaration) : tactic (option string) :=
 do tt ← succeeds (has_attribute `simp d.to_name) | return none,
-   l ← simp_lemmas.mk.add_simp d.to_name,
-   let cfg : simp_config_ext := {},
-   succ ← succeeds (solve_aux d.type (intros >> tactic.interactive.simp_core_aux cfg.to_simp_config cfg.discharger l [] [] tt >> try tactic.triv >> try (tactic.reflexivity reducible) >> done)),
+   tt ← is_prop d.type | return none,
+
+   let cfg : simp_config_ext := {contextual := tt},
+   succ ← succeeds (solve_aux d.type
+     (do hs ← intros, l ← simp_lemmas.mk.add_simp d.to_name, l ← l.append hs, tactic.interactive.simp_core_aux cfg.to_simp_config cfg.discharger l [] [] tt)),
    return $
      if succ then none
      else "simp lemma will never fire"
@@ -620,21 +622,37 @@ It will always succeed, even if some of the declarations do not exist. -/
 @[user_command] meta def apply_nolint_cmd (_ : parse $ tk "apply_nolint") : parser unit :=
 ident_* >>= ↑apply_nolint_tac
 
-
 #exit
 
 #lint_mathlib only valid_simp
 
-def k : ¬ nonempty empty := by simp only [nonempty_empty]
 
-#print k
--- logic\basic.lean
+def k : ∀ {p : Prop} {q : p → Prop} (h : p), (∀ (h' : p), q h') ↔ q h :=
+begin
+  intros _ _ h, simp only [forall_prop_of_true, h],
+ end
+
+example : ∀ {p : Prop} {q : p → Prop}, ¬p → ((∀ (h' : p), q h') ↔ true) :=
+begin
+  intros _ _ h, simp only [forall_prop_of_false, h],
+end
+
 #print forall_prop_of_true /- simp lemma will never fire -/
-#print nonempty_empty /- simp lemma will never fire -/
 #print false_ne_true /- simp lemma will never fire -/
 #print imp_iff_right /- simp lemma will never fire -/
 #print forall_prop_of_false /- simp lemma will never fire -/
-#print exists_false /- simp lemma will never fire -/
-#print exists_prop_of_true /- simp lemma will never fire -/
-#print exists_prop_of_false /- simp lemma will never fire -/
-#print not_nonempty_pempty /- simp lemma will never fire -/
+
+-- data/list/defs.lean
+#print list.concat /- simp lemma will never fire -/
+#print list.inits /- simp lemma will never fire -/
+#print list.range' /- simp lemma will never fire -/
+#print list.func.set /- simp lemma will never fire -/
+#print list.ilast' /- simp lemma will never fire -/
+#print list.func.pointwise /- simp lemma will never fire -/
+#print list.head' /- simp lemma will never fire -/
+#print list.inth /- simp lemma will never fire -/
+#print list.modify_nth_tail /- simp lemma will never fire -/
+#print list.func.get /- simp lemma will never fire -/
+#print list.last' /- simp lemma will never fire -/
+#print list.modify_head /- simp lemma will never fire -/
+#print list.tails /- simp lemma will never fire -/
