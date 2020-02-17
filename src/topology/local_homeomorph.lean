@@ -95,7 +95,7 @@ lemma symm_to_fun : e.symm.to_fun = e.inv_fun := rfl
 lemma symm_inv_fun : e.symm.inv_fun = e.to_fun := rfl
 lemma symm_source : e.symm.source = e.target := rfl
 lemma symm_target : e.symm.target = e.source := rfl
-lemma symm_symm : e.symm.symm = e := eq_of_local_equiv_eq $ by simp
+@[simp] lemma symm_symm : e.symm.symm = e := eq_of_local_equiv_eq $ by simp
 
 /-- A local homeomorphism is continuous at any point of its source -/
 lemma continuous_at_to_fun {x : α} (h : x ∈ e.source) : continuous_at e.to_fun x :=
@@ -219,7 +219,7 @@ protected def refl (α : Type*) [topological_space α] : local_homeomorph α α 
 -- The corresponding lemmas for local_equiv are already marked simp.
 lemma refl_source  : (local_homeomorph.refl α).source = univ := rfl
 lemma refl_target  : (local_homeomorph.refl α).target = univ := rfl
-lemma refl_symm    : (local_homeomorph.refl α).symm = local_homeomorph.refl α := rfl
+@[simp] lemma refl_symm    : (local_homeomorph.refl α).symm = local_homeomorph.refl α := rfl
 lemma refl_to_fun  : (local_homeomorph.refl α).to_fun = id := rfl
 lemma refl_inv_fun : (local_homeomorph.refl α).inv_fun = id := rfl
 
